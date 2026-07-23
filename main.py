@@ -14,7 +14,15 @@ class handler(BaseHTTPRequestHandler):
                 query = self.path.split("?")[1]
                 username = query.split("=")[1]
             else:
-                username = "lillviqa"
+                username = ""
+            if "?" in self.path:
+                parts = self.path.split("?")
+                if len(parts) > 1 and "=" in parts[1]:
+                    username = parts[1].split("=")[1].strip()
+
+            if not username:
+                self.wfile.write(json.dumps({"success": False, "error": "Kullanıcı adı belirtilmedi"}).encode())
+                return
 
             # Doğrudan kullanıcı adı ile ID bulma (POST isteği kullanan alternatif stabil yöntem yerine V1 API arama düzeltmesi)
             url_id = f"https://users.roblox.com/v1/usernames/users"
