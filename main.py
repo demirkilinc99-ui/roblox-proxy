@@ -16,9 +16,20 @@ class handler(BaseHTTPRequestHandler):
             else:
                 username = "lillviqa"
 
-            # 1. Kullanıcı ID bulma
-            url_id = f"https://users.roblox.com/v1/users/search?keyword={username}&limit=1"
-            req = urllib.request.Request(url_id, headers={'User-Agent': 'Mozilla/5.0'})
+            # Doğrudan kullanıcı adı ile ID bulma (POST isteği kullanan alternatif stabil yöntem yerine V1 API arama düzeltmesi)
+            url_id = f"https://users.roblox.com/v1/usernames/users"
+            payload = json.dumps({"usernames": [username], "excludeBannedUsers": True}).encode("utf-8")
+            
+            req = urllib.request.Request(
+                url_id, 
+                data=payload, 
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+                },
+                method='POST'
+            )
+            
             with urllib.request.urlopen(req) as response:
                 data = json.loads(response.read().decode())
                 if not data.get("data") or len(data["data"]) == 0:
@@ -26,10 +37,10 @@ class handler(BaseHTTPRequestHandler):
                     return
                 
                 user_id = data["data"][0]["id"]
-                display_name = data["data"][0]["displayName"]
                 real_name = data["data"][0]["name"]
+                display_name = data["data"][0]["displayName"]
 
-            # 2. Takipçi Sayısı (Hata yönetimi ile)
+            # 2. Takipçi Sayısı
             followers_count = 0
             try:
                 followers_url = f"https://friends.roblox.com/v1/users/{user_id}/followers/count"
@@ -38,7 +49,7 @@ class handler(BaseHTTPRequestHandler):
             except:
                 pass
 
-            # 3. Arkadaş Sayısı (Hata yönetimi ile)
+            # 3. Arkadaş Sayısı
             friends_count = 0
             try:
                 friends_url = f"https://friends.roblox.com/v1/users/{user_id}/friends/count"
@@ -47,7 +58,7 @@ class handler(BaseHTTPRequestHandler):
             except:
                 pass
 
-            # 4. Profil Detayları (Hata yönetimi ile)
+            # 4. Profil Detayları
             created_at = ""
             bio = "No bio."
             try:
