@@ -10,33 +10,20 @@ class handler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             
-            if "?" in self.path:
-                query = self.path.split("?")[1]
-                username = query.split("=")[1]
-            else:
-                username = ""
+            username = ""
             if "?" in self.path:
                 parts = self.path.split("?")
-                if len(parts) > 1 and "=" in parts[1]:
-                    username = parts[1].split("=")[1].strip()
+                for part in parts:
+                    if part.startswith("username="):
+                        username = part.split("=")[1].strip()
 
             if not username:
                 self.wfile.write(json.dumps({"success": False, "error": "Kullanıcı adı belirtilmedi"}).encode())
                 return
 
-            # Doğrudan kullanıcı adı ile ID bulma (POST isteği kullanan alternatif stabil yöntem yerine V1 API arama düzeltmesi)
-            url_id = f"https://users.roblox.com/v1/usernames/users"
-            payload = json.dumps({"usernames": [username], "excludeBannedUsers": True}).encode("utf-8")
-            
-            req = urllib.request.Request(
-                url_id, 
-                data=payload, 
-                headers={
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-                },
-                method='POST'
-            )
+            # 1. Klasik ve stabil V1 Arama Endpoint'i
+            url_id = f"https://users.roblox.com/v1/users/search?keyword={username}&limit=1"
+            req = urllib.request.Request(url_id, headers={'User-Agent': 'Mozilla/5.0'})
             
             with urllib.request.urlopen(req) as response:
                 data = json.loads(response.read().decode())
