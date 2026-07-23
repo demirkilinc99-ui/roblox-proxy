@@ -18,14 +18,17 @@ class handler(BaseHTTPRequestHandler):
             else:
                 username = "lillviqa"
 
-            # 1. Kullanıcı ID bulma
+# 1. Kullanıcı ID bulma
             url_id = f"https://users.roblox.com/v1/users/search?keyword={username}&limit=1"
             req = urllib.request.Request(url_id, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req) as response:
                 data = json.loads(response.read().decode())
-                if not data.get("data"):
-                    self.wfile.write(json.dumps({"error": "NotFound"}).encode())
+                # Eğer aranan kullanıcı bulunamazsa güvenli çıkış yap
+                if not data.get("data") or len(data["data"]) == 0:
+                    error_result = {"success": False, "error": "Kullanıcı bulunamadı"}
+                    self.wfile.write(json.dumps(error_result).encode())
                     return
+                
                 user_id = data["data"][0]["id"]
                 display_name = data["data"][0]["displayName"]
                 real_name = data["data"][0]["name"]
